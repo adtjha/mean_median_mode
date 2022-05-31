@@ -1,0 +1,32 @@
+doctype html
+html(lang='en')
+	head
+		meta(charset='UTF-8')
+		meta(http-equiv='X-UA-Compatible' content='IE=edge')
+		meta(name='viewport' content='width=device-width, initial-scale=1.0')
+		script(src='https://cdn.tailwindcss.com')
+		title Result
+	body.bg-gray-300.w-screen.h-screen.overflow-hidden.flex.items-center.justify-center
+		.w-80.h-fit.px-6.py-4.gap-4.bg-white.rounded-2xl.shadow-md.flex.flex-col.items-center.justify-start.text-xl.font-bold
+			h1.w-full.text-center.text-4xl.font-bold Results
+			.table
+				.w-full.table-row.p-4
+					h1.table-cell.uppercase.text-gray-300.pr-4.pb-2 mean
+					h1.table-cell.break-words.truncate #{mean}
+				.w-full.table-row.p-4
+					h1.table-cell.uppercase.text-gray-300.pr-4.pb-2 median
+					h1.table-cell #{median}
+				.table-row.w-full.p-4
+					h1.table-cell.uppercase.text-gray-300.pr-4.pb-2 mode
+					h1.table-cell #{mode}
+			.w-full.flex.flex-row.items-center.justify-evenly.p-4
+				a(href='/enter')
+					button.text-white.bg-blue-700.font-medium.rounded-lg.text-sm.px-5.text-center.inline-flex.items-center.mr-2(type='button' class='hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800')
+						svg.h-5.w-5.mr-2.-ml-1(xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor')
+							path(fill-rule='evenodd' d='M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z' clip-rule='evenodd')
+						|             Redo
+				a(href='/logout')
+					button.text-white.bg-gray-700.font-medium.rounded-lg.text-sm.px-5.text-center.inline-flex.items-center(type='button' class='hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 py-2.5 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800')
+						| Logout
+						svg.h-5.w-5.ml-2.-mr-1(xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor')
+							path(fill-rule='evenodd' d='M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z' clip-rule='evenodd')

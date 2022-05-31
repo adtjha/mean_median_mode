@@ -1,0 +1,10 @@
+{
+  "users": {
+    "adtjha1@gmail.com": {
+      "name": "Aditya Jha",
+      "mail": "adtjha1@gmail.com",
+      "hashedPass": "aaa0ecdc91ff291205090582b13ac15e2346be5f332e932429006f571b8f9b88",
+      "salt": "4ff805696d12"
+    }
+  }
+}

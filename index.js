@@ -1,43 +1,129 @@
-const express = require('express')
-const path = require('path');
+import express from 'express'
+import path from 'path'
+import crypto, { verify } from 'crypto'
+import { join, dirname } from 'path'
+import { Low, JSONFile } from 'lowdb'
+import { fileURLToPath } from 'url'
+import pug from 'pug'
+import cookieParser from "cookie-parser"
+import sessions from 'express-session'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
 const app = express()
 const port = process.env.PORT || 3000;
 
+app.use(sessions({
+    secret: "1223ccbd7d49a90866c3c49f99d55e87897686fcd63d9082a09b2cf16ce47c48",
+    saveUninitialized: true,
+    cookie: { maxAge: 1000 * 60 * 60 * 24 },
+    resave: false
+}))
+
+app.use(express.json());
 app.use(express.urlencoded({
     extended: true
 }))
+
+app.use(cookieParser());
+
+const file = join(__dirname, 'db.json')
+const adapter = new JSONFile(file)
+const db = new Low(adapter)
+
+await db.read()
+
+db.data ||= { users: {} }
+
+const { users } = db.data
+
+let session;
 
 app.get('/', (req, res) => {
     // check login if true
     // res.redirect('/enter');
     // if false
-    res.redirect('/login');
+    session = req.session;
+    if (session.user) {
+        res.redirect('/enter')
+    } else {
+        res.redirect('/login');
+    }
 })
 
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, '/pages/register.html'));
 })
 
-app.post('/register', (req, res) => {
-    res.send(req.body)
+app.post('/register', async (req, res) => {
+    try {
+        const { name, mail, password } = req.body;
+
+        if (!(name && mail && password)) throw Error('Input Parameters improper.')
+
+        const salt = crypto.randomBytes(6).toString('hex')
+        const hashedPass = crypto.createHash('sha256').update(`${password}${salt}`, 'utf-8').digest('hex')
+
+        users[mail] = { name, mail, hashedPass, salt };
+
+        await db.write()
+
+        session = req.session;
+        session.user = req.body.name;
+    } catch (error) {
+        res.send(pug.renderFile('./pages/templates/register.pug', { error: error.message }))
+        return
+    }
+    res.redirect('/enter')
+    return
 })
 
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, '/pages/login.html'));
 })
 
-app.post('/login', (req, res) => {
-    res.send(req.body)
+app.post('/login', (req, res, next) => {
+    const { mail, password } = req.body;
+
+    // check if user exsits
+    const user = users[mail]
+    if (!user) res.send('No User Found')
+
+    // check if password matches
+    try {
+        const hashedPass = crypto.createHash('sha256').update(`${password}${user.salt}`, 'utf-8').digest('hex')
+        if (hashedPass === user.hashedPass) {
+            session = req.session;
+            session.user = users[mail].name;
+            res.redirect('/enter')
+        } else {
+            next({ hashedPass, user: user.hashedPass })
+        }
+    } catch (error) {
+        next(error)
+    }
+    // redirect to /enter
+    next()
 })
 
-app.get('/enter', (req, res) => {
+const verifyUser = (req, res, next) => {
+    session = req.session;
+    if (session.user) {
+        next()
+    } else {
+        res.redirect('/login');
+    }
+}
+
+app.get('/enter', verifyUser, (req, res) => {
     res.sendFile(path.join(__dirname, '/pages/dataEntry.html'));
 })
 
-app.post('/numbers', (req, res) => {
+app.post('/numbers', verifyUser, (req, res) => {
     const numbersObj = req.body
     let numbers = Object.values(numbersObj);
     numbers = numbers.map(e => parseFloat(e))
+    numbers = numbers.filter(e => !isNaN(e))
     console.log(numbers)
 
     // calulate mean
@@ -68,7 +154,9 @@ app.post('/numbers', (req, res) => {
         }
     });
 
-    if (Object.values(repeatedNumbers) > 0) {
+    console.log({ repeatedNumbers })
+
+    if (Object.values(repeatedNumbers).length > 0) {
         max = Object.values(repeatedNumbers).sort((a, b) => b - a)[0]
 
         Object.entries(repeatedNumbers).forEach(([number, occurence]) => {
@@ -81,16 +169,13 @@ app.post('/numbers', (req, res) => {
         mode = [...numbers]
     }
 
-
-    console.log({ repeatedNumbers, max })
-    console.log({ mean, median, mode })
-    res.send({ mean, median, mode })
+    res.send(pug.renderFile('./pages/templates/result.pug', { mean, median, mode: mode.join(', ') }))
 })
 
-app.get('/results', (req, res) => {
-
-    res.sendFile(path.join(__dirname, '/pages/results.html'));
-})
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/');
+});
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
