@@ -14,7 +14,7 @@ dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const app = express()
-const port = process.env.$PORT || 3000;
+const port = process.env.PORT || 3000;
 
 app.use(sessions({
     secret: "1223ccbd7d49a90866c3c49f99d55e87897686fcd63d9082a09b2cf16ce47c48",
