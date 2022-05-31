@@ -1,5 +1,6 @@
 import express from 'express'
 import path from 'path'
+import dotenv from "dotenv";
 import crypto, { verify } from 'crypto'
 import { join, dirname } from 'path'
 import { Low, JSONFile } from 'lowdb'
@@ -8,10 +9,12 @@ import pug from 'pug'
 import cookieParser from "cookie-parser"
 import sessions from 'express-session'
 
+dotenv.config();
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const app = express()
-const port = process.env.PORT || 3000;
+const port = process.env.$PORT || 3000;
 
 app.use(sessions({
     secret: "1223ccbd7d49a90866c3c49f99d55e87897686fcd63d9082a09b2cf16ce47c48",
@@ -85,12 +88,14 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res, next) => {
     const { mail, password } = req.body;
 
-    // check if user exsits
-    const user = users[mail]
-    if (!user) res.send('No User Found')
-
-    // check if password matches
     try {
+        if (!(mail && password)) throw Error('Input Required.')
+
+        // check if user exsits
+        const user = users[mail]
+        if (!user) throw Error('No User Found')
+
+        // check if password matches
         const hashedPass = crypto.createHash('sha256').update(`${password}${user.salt}`, 'utf-8').digest('hex')
         if (hashedPass === user.hashedPass) {
             session = req.session;
@@ -100,7 +105,8 @@ app.post('/login', (req, res, next) => {
             next({ hashedPass, user: user.hashedPass })
         }
     } catch (error) {
-        next(error)
+        res.send(pug.renderFile('./pages/templates/login.pug', { error: error.message }))
+        return
     }
     // redirect to /enter
     next()
